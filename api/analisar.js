@@ -1,6 +1,5 @@
 const https = require('https');
 
-// Rate limiting simples em memória
 const rateLimit = new Map();
 const LIMITE_POR_IP = 10;
 const JANELA_MS = 24 * 60 * 60 * 1000;
@@ -45,8 +44,7 @@ RETORNO ESPERADO (JSON):
 
 async function chamarGemini(prompt) {
   const apiKey = process.env.GEMINI_API_KEY;
-  // A correção principal está nesta URL e no uso de fetch/https moderno
-  const url =  + 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey};'
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
@@ -54,23 +52,28 @@ async function chamarGemini(prompt) {
   });
 
   return new Promise((resolve, reject) => {
-    const req = https.request(url, {
+    const options = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
-    }, (res) => {
+    };
+
+    const req = https.request(url, options, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
         try {
           const json = JSON.parse(data);
           if (json.error) return reject(new Error(json.error.message));
-          let text = json.candidates[0].content.parts[0].text;
+          const text = json.candidates[0].content.parts[0].text;
           const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
           resolve(JSON.parse(clean));
-        } catch (e) { reject(new Error("Erro na resposta da IA. Verifique os dados.")); }
+        } catch (e) {
+          reject(new Error("Erro na resposta da IA. Verifique os dados."));
+        }
       });
     });
-    req.on('error', reject);
+
+    req.on('error', (e) => reject(new Error("Erro de conexão: " + e.message)));
     req.write(body);
     req.end();
   });
@@ -82,7 +85,8 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
+
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress || 'unknown';
   if (!checarRateLimit(ip)) return res.status(429).json({ error: 'Limite diário atingido.' });
 
