@@ -46,7 +46,7 @@ RETORNO ESPERADO (JSON):
 async function chamarGemini(prompt) {
   const apiKey = process.env.GEMINI_API_KEY;
   // A correção principal está nesta URL e no uso de fetch/https moderno
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url =  + 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${apiKey};'
 
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
