@@ -62,8 +62,7 @@ function chamarGemini(prompt) {
 
     const options = {
       hostname: 'generativelanguage.googleapis.com',
-      // CORREÇÃO: Usando crases (backticks) para ler a variável da API Key
-      path: `/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
     };
